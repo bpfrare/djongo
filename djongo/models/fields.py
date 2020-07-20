@@ -16,6 +16,7 @@ These are the main fields for working with MongoDB.
 import functools
 import typing
 
+from datetime import datetime
 from bson import ObjectId
 from django import forms
 from django.core.exceptions import ValidationError
@@ -30,6 +31,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html_join, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 
 def make_mdl(model, model_dict):
@@ -38,7 +40,11 @@ def make_mdl(model, model_dict):
     """
     for field_name in model_dict:
         field = model._meta.get_field(field_name)
-        model_dict[field_name] = field.to_python(model_dict[field_name])
+        value = field.to_python(model_dict[field_name])
+        if isinstance(value, datetime):
+            if not timezone.is_aware(value):
+                value = timezone.make_aware(value, timezone.utc)
+        model_dict[field_name] = value
 
     return model(**model_dict)
 
