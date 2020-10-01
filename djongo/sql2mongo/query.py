@@ -20,6 +20,7 @@ from sqlparse.sql import (
     IdentifierList, Identifier, Parenthesis,
     Where, Token,
     Statement)
+from django.db import IntegrityError
 
 from . import SQLDecodeError, SQLToken, MigrationError
 from .converters import (
@@ -831,7 +832,10 @@ class Result:
                     f'Pymongo error: {e.details}\n'
                     f'Version: {djongo.__version__}'
                 )
-                raise exe from e
+                if e.details['writeErrors'][0]['code'] == 11000:
+                    raise IntegrityError()
+                else:
+                    raise exe from e
 
             except Exception as e:
                 import djongo
